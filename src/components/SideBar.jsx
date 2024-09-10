@@ -1,22 +1,18 @@
-import { Outlet } from 'react-router-dom';
-import AppNav from './AppNav';
-import Logo from './Logo';
-import styles from './Sidebar.module.css';
+import { Outlet } from "react-router-dom";
+import AppNav from "./AppNav";
+import Logo from "./Logo";
+import styles from "./Sidebar.module.css";
+import Footer from "./Footer.jsx";
 
 function SideBar() {
-    return (
-        <div className={styles.sidebar}>
-            <Logo />
-            <AppNav />
-            <Outlet />
-            {/* TODO ADD TO ANOTHER COMPONENT */}
-            <footer className={styles.footer}>
-                <p className={styles.copyright}>
-                    &copy; Copyright {new Date().getFullYear()} by WorldWise.inc
-                </p>
-            </footer>
-        </div>
-    );
+  return (
+    <div className={styles.sidebar}>
+      <Logo />
+      <AppNav />
+      <Outlet />
+      <Footer />
+    </div>
+  );
 }
 
 export default SideBar;

@@ -1,145 +1,161 @@
-import { useEffect, useState } from 'react';
-import 'react-datepicker/dist/react-datepicker.css';
+import { useEffect, useState } from "react";
+import "react-datepicker/dist/react-datepicker.css";
 
-import styles from './Form.module.css';
-import Button from './Button';
-import BackBtn from './BackBtn';
-import Message from './Message';
-import Spinner from './Spinner';
-import DatePicker from 'react-datepicker';
-import { useUrlPosition } from '../hooks/useUrlPosition';
-import { useCities } from '../context/CitiesContext';
-import { useNavigate } from 'react-router-dom';
+import styles from "./Form.module.css";
+import Button from "./Button";
+import BackBtn from "./BackBtn";
+import Message from "./Message";
+import Spinner from "./Spinner";
+import DatePicker from "react-datepicker";
+import { useUrlPosition } from "../hooks/useUrlPosition";
+import { useCities } from "../context/CitiesContext";
+import { useNavigate } from "react-router-dom";
 
 export function convertToEmoji(countryCode) {
-    const codePoints = countryCode
-        .toUpperCase()
-        .split('')
-        .map(char => 127397 + char.charCodeAt());
-    return String.fromCodePoint(...codePoints);
+  const codePoints = countryCode
+    .toUpperCase()
+    .split("")
+    .map((char) => 127397 + char.charCodeAt());
+  return String.fromCodePoint(...codePoints);
+}
+
+export function fromatCountryName(countryName) {
+  const regex = /\(([^)]+)\)/; //Find content inside parentheses and match one or more characters [^)]+ that are not a closing parentheses
+  const match = countryName.match(regex);
+
+  if (match) {
+    const matchedContent = match[1].trim();
+    const capitaliseContentInParentheses =
+      matchedContent.charAt(0).toUpperCase() + matchedContent.slice(1);
+
+    const name = countryName.replace(regex, "").trim();
+
+    return `${capitaliseContentInParentheses} ${name}`;
+  } else {
+    return countryName;
+  }
 }
 
 const BASE_URL = `https://api.bigdatacloud.net/data/reverse-geocode-client`;
 
 function Form() {
-    const [lat, lng] = useUrlPosition();
-    const { createCity, isLoading } = useCities();
-    const navigate = useNavigate();
+  const [lat, lng] = useUrlPosition();
+  const { createCity, isLoading } = useCities();
+  const navigate = useNavigate();
 
-    const [isLoadingGeocoding, setIsLoadingGeocoding] = useState(false);
-    const [cityName, setCityName] = useState('');
-    const [country, setCountry] = useState('');
-    const [date, setDate] = useState(new Date());
-    const [notes, setNotes] = useState('');
-    const [geocodingError, setgeocodingError] = useState('');
+  const [isLoadingGeocoding, setIsLoadingGeocoding] = useState(false);
+  const [cityName, setCityName] = useState("");
+  const [country, setCountry] = useState("");
+  const [countryCode, setCountryCode] = useState("");
+  const [date, setDate] = useState(new Date());
+  const [notes, setNotes] = useState("");
+  const [geocodingError, setgeocodingError] = useState("");
 
-    const [emoji, setEmoji] = useState('');
+  const [emoji, setEmoji] = useState("");
 
-    useEffect(
-        function () {
-            if (!lat && !lng) return;
+  useEffect(
+    function () {
+      if (!lat && !lng) return;
 
-            async function fetchCityData() {
-                try {
-                    setIsLoadingGeocoding(true);
-                    setgeocodingError('');
-                    const res = await fetch(
-                        `${BASE_URL}?latitude=${lat}&longitude=${lng}`
-                    );
-                    const data = await res.json();
+      async function fetchCityData() {
+        try {
+          setIsLoadingGeocoding(true);
+          setgeocodingError("");
+          const res = await fetch(
+            `${BASE_URL}?latitude=${lat}&longitude=${lng}`,
+          );
+          const data = await res.json();
 
-                    if (!data.countryCode)
-                        throw new Error(
-                            'That does not seem to be a city. Click somewhere else.'
-                        );
+          if (!data.countryCode)
+            throw new Error(
+              "That does not seem to be a city. Click somewhere else.",
+            );
 
-                    setCityName(data.city || data.locality || '');
-                    setCountry(data.countryName || '');
-                    setEmoji(convertToEmoji(data.countryCode));
-                } catch (err) {
-                    setgeocodingError(err.message);
-                } finally {
-                    setIsLoadingGeocoding(false);
-                }
-            }
+          setCountryCode(data.countryCode || "");
+          setCityName(data.city || data.locality || "");
+          setCountry(fromatCountryName(data.countryName) || "");
+          setEmoji(convertToEmoji(data.countryCode));
+        } catch (err) {
+          setgeocodingError(err.message);
+        } finally {
+          setIsLoadingGeocoding(false);
+        }
+      }
 
-            fetchCityData();
-        },
-        [lat, lng]
-    );
+      fetchCityData();
+    },
+    [lat, lng],
+  );
 
-    async function handleSubmit(e) {
-        e.preventDefault();
+  async function handleSubmit(e) {
+    e.preventDefault();
 
-        if (!cityName || !date) return;
+    if (!cityName || !date) return;
 
-        const newCity = {
-            cityName,
-            country,
-            emoji,
-            date,
-            notes,
-            position: { lat, lng },
-        };
+    const newCity = {
+      cityName,
+      country,
+      countryCode,
+      emoji,
+      date,
+      notes,
+      position: { lat, lng },
+    };
 
-        await createCity(newCity);
-        navigate('/app')
-    }
+    await createCity(newCity);
+    navigate("/app");
+  }
 
-    if (isLoadingGeocoding) return <Spinner />;
+  if (isLoadingGeocoding) return <Spinner />;
 
-    if (geocodingError) {
-        return <Message message={geocodingError} />;
-    }
+  if (geocodingError) {
+    return <Message message={geocodingError} />;
+  }
 
-    if (!lat && !lng) {
-        return <Message message='Start by clicking somewhere on the map' />;
-    }
+  if (!lat && !lng) {
+    return <Message message="Start by clicking somewhere on the map" />;
+  }
 
-    return (
-        <form className={`${styles.form} ${isLoading ? styles.loading : ''}`} onSubmit={handleSubmit}>
-            <div className={styles.row}>
-                <label htmlFor='cityName'>City name</label>
-                <input
-                    id='cityName'
-                    onChange={e => setCityName(e.target.value)}
-                    value={cityName}
-                />
-                <span className={styles.flag}>{emoji}</span>
-            </div>
+  return (
+    <form
+      className={`${styles.form} ${isLoading ? styles.loading : ""}`}
+      onSubmit={handleSubmit}
+    >
+      <div className={styles.row}>
+        <label htmlFor="cityName">City name</label>
+        <input
+          id="cityName"
+          onChange={(e) => setCityName(e.target.value)}
+          value={cityName}
+        />
+        <span className={styles.flag}>{emoji}</span>
+      </div>
 
-            <div className={styles.row}>
-                <label htmlFor='date'>When did you go to {cityName}?</label>
-                {/* <input
-                    id='date'
-                    onChange={e => setDate(e.target.value)}
-                    value={date}
-                /> */}
-                <DatePicker
-                    id='date'
-                    selected={date}
-                    onChange={date => setDate(date)}
-                    dateFormat='dd/MM/yyy'
-                />
-            </div>
+      <div className={styles.row}>
+        <label htmlFor="date">When did you go to {cityName}?</label>
+        <DatePicker
+          id="date"
+          selected={date}
+          onChange={(date) => setDate(date)}
+          dateFormat="dd/MM/yyy"
+        />
+      </div>
 
-            <div className={styles.row}>
-                <label htmlFor='notes'>
-                    Notes about your trip to {cityName}
-                </label>
-                <textarea
-                    id='notes'
-                    onChange={e => setNotes(e.target.value)}
-                    value={notes}
-                />
-            </div>
+      <div className={styles.row}>
+        <label htmlFor="notes">Notes about your trip to {cityName}</label>
+        <textarea
+          id="notes"
+          onChange={(e) => setNotes(e.target.value)}
+          value={notes}
+        />
+      </div>
 
-            <div className={styles.buttons}>
-                <Button type='primary'>Add</Button>
-                <BackBtn />
-            </div>
-        </form>
-    );
+      <div className={styles.buttons}>
+        <Button type="primary">Add</Button>
+        <BackBtn />
+      </div>
+    </form>
+  );
 }
 
 export default Form;

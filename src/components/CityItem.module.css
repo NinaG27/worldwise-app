@@ -1,5 +1,5 @@
 .cityItem,
-.cityItem:link,
+.cityItemlink,
 .cityItem:visited {
   display: flex;
   gap: 1.6rem;
