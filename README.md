@@ -17,11 +17,18 @@ The application includes several key pages and functionalities:
 https://github.com/user-attachments/assets/c687748d-496b-427c-8e81-36eb7c811e60
 
 
-**City selector**: Allows users to select a visited city and see details and thair custom notes.  
+**City selector**: Allows users to select a visited city and see details and their custom notes.  
 
+
+https://github.com/user-attachments/assets/1959445c-8948-469a-bf04-cdbf53c1138a
 
 
 **Country Selector**: Allows users to select countries and see details.
+
+
+https://github.com/user-attachments/assets/a86be8cf-010b-4315-a6b0-ba955cead922
+
+
 
 
 # Technologies and Concepts
